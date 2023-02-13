@@ -1,137 +1,204 @@
+# %%
 import pandas as pd
 import numpy as np
 import itertools
-from sklearn import metrics
-from sklearn.metrics import confusion_matrix, accuracy_score, roc_curve, auc, roc_auc_score
+
+# from sklearn import metrics
+from sklearn.metrics import (
+    confusion_matrix,
+    accuracy_score,
+    roc_curve,
+    auc,
+    roc_auc_score,
+)
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+
 tqdm.pandas()
 
-#--------------------------
-#Data set
+# --------------------------
+# Data set
 
 # Ref: https://github.com/serengil/deepface/tree/master/tests/dataset
 idendities = {
-    "Angelina": ["img1.jpg", "img2.jpg", "img4.jpg", "img5.jpg", "img6.jpg", "img7.jpg", "img10.jpg", "img11.jpg"],
-    "Scarlett": ["img8.jpg", "img9.jpg", "img47.jpg", "img48.jpg", "img49.jpg", "img50.jpg", "img51.jpg"],
-    "Jennifer": ["img3.jpg", "img12.jpg", "img53.jpg", "img54.jpg", "img55.jpg", "img56.jpg"],
+    "Angelina": [
+        "img1.jpg",
+        "img2.jpg",
+        "img4.jpg",
+        "img5.jpg",
+        "img6.jpg",
+        "img7.jpg",
+        "img10.jpg",
+        "img11.jpg",
+    ],
+    "Scarlett": [
+        "img8.jpg",
+        "img9.jpg",
+        "img47.jpg",
+        "img48.jpg",
+        "img49.jpg",
+        "img50.jpg",
+        "img51.jpg",
+    ],
+    "Jennifer": [
+        "img3.jpg",
+        "img12.jpg",
+        "img53.jpg",
+        "img54.jpg",
+        "img55.jpg",
+        "img56.jpg",
+    ],
     "Mark": ["img13.jpg", "img14.jpg", "img15.jpg", "img57.jpg", "img58.jpg"],
     "Jack": ["img16.jpg", "img17.jpg", "img59.jpg", "img61.jpg", "img62.jpg"],
     "Elon": ["img18.jpg", "img19.jpg", "img67.jpg"],
     "Jeff": ["img20.jpg", "img21.jpg"],
     "Marissa": ["img22.jpg", "img23.jpg"],
     "Sundar": ["img24.jpg", "img25.jpg"],
-    "Katy": ["img26.jpg", "img27.jpg", "img28.jpg", "img42.jpg", "img43.jpg", "img44.jpg", "img45.jpg", "img46.jpg"],
+    "Katy": [
+        "img26.jpg",
+        "img27.jpg",
+        "img28.jpg",
+        "img42.jpg",
+        "img43.jpg",
+        "img44.jpg",
+        "img45.jpg",
+        "img46.jpg",
+    ],
     "Matt": ["img29.jpg", "img30.jpg", "img31.jpg", "img32.jpg", "img33.jpg"],
     "Leonardo": ["img34.jpg", "img35.jpg", "img36.jpg", "img37.jpg"],
-    "George": ["img38.jpg", "img39.jpg", "img40.jpg", "img41.jpg"]
+    "George": ["img38.jpg", "img39.jpg", "img40.jpg", "img41.jpg"],
 }
-#--------------------------
-#Positives
+# --------------------------
+# Positives
 
 positives = []
 
 for key, values in idendities.items():
 
-    #print(key)
-    for i in range(0, len(values)-1):
-        for j in range(i+1, len(values)):
-            #print(values[i], " and ", values[j])
+    # print(key)
+    for i in range(0, len(values) - 1):
+        for j in range(i + 1, len(values)):
+            # print(values[i], " and ", values[j])
             positive = []
             positive.append(values[i])
             positive.append(values[j])
             positives.append(positive)
 
-positives = pd.DataFrame(positives, columns = ["file_x", "file_y"])
+positives = pd.DataFrame(positives, columns=["file_x", "file_y"])
 positives["decision"] = "Yes"
 
 print(positives.shape)
-#--------------------------
-#Negatives
+# --------------------------
+# Negatives
 
 samples_list = list(idendities.values())
 
 negatives = []
 
 for i in range(0, len(idendities) - 1):
-    for j in range(i+1, len(idendities)):
-        #print(samples_list[i], " vs ",samples_list[j])
+    for j in range(i + 1, len(idendities)):
+        # print(samples_list[i], " vs ",samples_list[j])
         cross_product = itertools.product(samples_list[i], samples_list[j])
         cross_product = list(cross_product)
-        #print(cross_product)
+        # print(cross_product)
 
         for cross_sample in cross_product:
-            #print(cross_sample[0], " vs ", cross_sample[1])
+            # print(cross_sample[0], " vs ", cross_sample[1])
             negative = []
             negative.append(cross_sample[0])
             negative.append(cross_sample[1])
             negatives.append(negative)
 
-negatives = pd.DataFrame(negatives, columns = ["file_x", "file_y"])
+negatives = pd.DataFrame(negatives, columns=["file_x", "file_y"])
 negatives["decision"] = "No"
 
 negatives = negatives.sample(positives.shape[0])
 
 print(negatives.shape)
-#--------------------------
-#Merge positive and negative ones
+# --------------------------
+# Merge positive and negative ones
 
-df = pd.concat([positives, negatives]).reset_index(drop = True)
+df = pd.concat([positives, negatives]).reset_index(drop=True)
 
 print(df.decision.value_counts())
 
-df.file_x = "dataset/"+df.file_x
-df.file_y = "dataset/"+df.file_y
+df.file_x = "dataset/" + df.file_x
+df.file_y = "dataset/" + df.file_y
 
-#--------------------------
-#DeepFace
+# --------------------------
+# DeepFace
 
 from deepface import DeepFace
 from deepface.basemodels import VGGFace, OpenFace, Facenet, FbDeepFace
 
 instances = df[["file_x", "file_y"]].values.tolist()
+# print(f"{instances=}")
 
-models = ['VGG-Face', 'Facenet', 'OpenFace', 'DeepFace']
-metrics = ['cosine', 'euclidean_l2']
+models = ["VGG-Face", "Facenet", "OpenFace", "DeepFace"]
+metrics = ["cosine", "euclidean_l2"]
 
-if True:
+if False:
 
-    pretrained_models = {}
+    # pretrained_models = {}
+    # pretrained_models["VGG-Face"] = VGGFace.loadModel()
+    # print("VGG-Face loaded")
+    # pretrained_models["Facenet"] = Facenet.loadModel()
+    # print("Facenet loaded")
+    # pretrained_models["OpenFace"] = OpenFace.loadModel()
+    # print("OpenFace loaded")
+    # pretrained_models["DeepFace"] = FbDeepFace.loadModel()
+    # print("FbDeepFace loaded")
 
-    pretrained_models["VGG-Face"] = VGGFace.loadModel()
-    print("VGG-Face loaded")
-    pretrained_models["Facenet"] = Facenet.loadModel()
-    print("Facenet loaded")
-    pretrained_models["OpenFace"] = OpenFace.loadModel()
-    print("OpenFace loaded")
-    pretrained_models["DeepFace"] = FbDeepFace.loadModel()
-    print("FbDeepFace loaded")
+    for model in tqdm(models, desc=" models", position=0):
+        DeepFace.build_model("VGG-Face")
+        # print(f"{model} loaded")
 
-    for model in models:
-        for metric in metrics:
+    for model in (pbar_0 := tqdm(models, desc=" models", position=0)):
+        pbar_0.set_description(f" models {model}")
+        pbar_0.refresh()
+        for metric in (
+            pbar_1 := tqdm(metrics, desc=" metrics", position=1, leave=False)
+        ):
+            pbar_1.set_description(f" metric {metric}")
+            pbar_1.refresh()
 
-            resp_obj = DeepFace.verify(instances
-                                       , model_name = model
-                                       , model = pretrained_models[model]
-                                       , distance_metric = metric
-                                       , enforce_detection = False)
-
+            # resp_obj = []
             distances = []
-
-            for i in range(0, len(instances)):
-                distance = round(resp_obj["pair_%s" % (i+1)]["distance"], 4)
+            for inst in (
+                pbar_2 := tqdm(instances, desc=" instances", position=2, leave=False)
+            ):
+                resp = DeepFace.verify(
+                    inst[0],
+                    inst[-1],
+                    model_name=model,
+                    # model=pretrained_models[model],
+                    distance_metric=metric,
+                    enforce_detection=False,
+                )
+                # resp_obj.append(resp)
+                distance = round(resp["distance"], 4)
+                tqdm.write(f"{distance=}")
                 distances.append(distance)
+            # tqdm.write(f"{resp_obj=}")
 
-            df['%s_%s' % (model, metric)] = distances
+            # distances = []
 
-    df.to_csv("face-recognition-pivot.csv", index = False)
+            # for i in range(0, len(instances)):
+            #     distance = round(resp_obj["pair_%s" % (i + 1)]["distance"], 4)
+            #     tqdm.write(f"{distance=}")
+            #     distances.append(distance)
+
+            df["%s_%s" % (model, metric)] = distances
+
+    df.to_csv("face-recognition-pivot.csv", index=False)
 else:
     df = pd.read_csv("face-recognition-pivot.csv")
 
 df_raw = df.copy()
 
-#--------------------------
-#Distribution
+# %%
+# --------------------------
+# Distribution
 
 fig = plt.figure(figsize=(15, 15))
 
@@ -139,36 +206,43 @@ figure_idx = 1
 for model in models:
     for metric in metrics:
 
-        feature = '%s_%s' % (model, metric)
+        feature = "%s_%s" % (model, metric)
 
         ax1 = fig.add_subplot(len(models) * len(metrics), len(metrics), figure_idx)
 
-        df[df.decision == "Yes"][feature].plot(kind='kde', title = feature, label = 'Yes', legend = True)
-        df[df.decision == "No"][feature].plot(kind='kde', title = feature, label = 'No', legend = True)
+        df[df.decision == "Yes"][feature].plot(
+            kind="kde", title=feature, label="Yes", legend=True
+        )
+        df[df.decision == "No"][feature].plot(
+            kind="kde", title=feature, label="No", legend=True
+        )
 
         figure_idx = figure_idx + 1
 
 plt.show()
 
-#--------------------------
-#Pre-processing for modelling
+# %%
+# --------------------------
+# Pre-processing for modelling
 
 columns = []
 for model in models:
     for metric in metrics:
-        feature = '%s_%s' % (model, metric)
+        feature = "%s_%s" % (model, metric)
         columns.append(feature)
 
 columns.append("decision")
 
 df = df[columns]
 
-df.loc[df[df.decision == 'Yes'].index, 'decision'] = 1
-df.loc[df[df.decision == 'No'].index, 'decision'] = 0
+df.loc[df[df.decision == "Yes"].index, "decision"] = 1
+df.loc[df[df.decision == "No"].index, "decision"] = 0
 
 print(df.head())
-#--------------------------
-#Train test split
+
+# %%
+# --------------------------
+# Train test split
 
 from sklearn.model_selection import train_test_split
 
@@ -182,33 +256,42 @@ x_train = df_train.drop(columns=[target_name]).values
 y_test = df_test[target_name].values
 x_test = df_test.drop(columns=[target_name]).values
 
-#print("target distribution:")
-#print(df_train[target_name].value_counts())
-#print(df_test[target_name].value_counts())
+# print("target distribution:")
+# print(df_train[target_name].value_counts())
+# print(df_test[target_name].value_counts())
 
-#--------------------------
-#LightGBM
+
+# %%
+# --------------------------
+# LightGBM
 
 import lightgbm as lgb
 
 features = df.drop(columns=[target_name]).columns.tolist()
-lgb_train = lgb.Dataset(x_train, y_train, feature_name = features)
-lgb_test = lgb.Dataset(x_test, y_test, feature_name = features)
+lgb_train = lgb.Dataset(x_train, y_train, feature_name=features)
+lgb_test = lgb.Dataset(x_test, y_test, feature_name=features)
 
 params = {
-    'task': 'train'
-    , 'boosting_type': 'gbdt'
-    , 'objective': 'multiclass'
-    , 'num_class': 2
-    , 'metric': 'multi_logloss'
+    "task": "train",
+    "boosting_type": "gbdt",
+    "objective": "multiclass",
+    "num_class": 2,
+    "metric": "multi_logloss",
 }
 
-gbm = lgb.train(params, lgb_train, num_boost_round=500, early_stopping_rounds = 50, valid_sets=lgb_test)
+gbm = lgb.train(
+    params,
+    lgb_train,
+    num_boost_round=500,
+    early_stopping_rounds=50,
+    valid_sets=lgb_test,
+)
 
 gbm.save_model("face-recognition-ensemble-model.txt")
 
-#--------------------------
-#Evaluation
+# %%
+# --------------------------
+# Evaluation
 
 predictions = gbm.predict(x_test)
 
@@ -226,15 +309,18 @@ tn, fp, fn, tp = cm.ravel()
 
 recall = tp / (tp + fn)
 precision = tp / (tp + fp)
-accuracy = (tp + tn)/(tn + fp +  fn + tp)
+accuracy = (tp + tn) / (tn + fp + fn + tp)
 f1 = 2 * (precision * recall) / (precision + recall)
 
-print("Precision: ", 100*precision,"%")
-print("Recall: ", 100*recall,"%")
-print("F1 score ",100*f1, "%")
-print("Accuracy: ", 100*accuracy,"%")
-#--------------------------
-#Interpretability
+print("Precision: ", 100 * precision, "%")
+print("Recall: ", 100 * recall, "%")
+print("F1 score ", 100 * f1, "%")
+print("Accuracy: ", 100 * accuracy, "%")
+
+
+# %%
+# --------------------------
+# Interpretability
 
 ax = lgb.plot_importance(gbm, max_num_features=20)
 plt.show()
@@ -252,15 +338,17 @@ for i in range(0, gbm.num_trees()):
     if i == 2:
         break
 """
-#--------------------------
-#ROC Curve
+# --------------------------
+# ROC Curve
 
-y_pred_proba = predictions[::,1]
+y_pred_proba = predictions[::, 1]
 
-fpr, tpr, _ = roc_curve(y_test,  y_pred_proba)
-auc = roc_auc_score(y_test, y_pred_proba)
+fpr, tpr, _ = roc_curve(y_test, y_pred_proba)
+auc_s = roc_auc_score(y_test, y_pred_proba)
 
-plt.figure(figsize=(7,3))
-plt.plot(fpr,tpr,label="data 1, auc="+str(auc))
+plt.figure(figsize=(7, 3))
+plt.plot(fpr, tpr, label="data 1, auc=" + str(auc_s))
 
-#--------------------------
+# --------------------------
+
+# %%
